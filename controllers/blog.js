@@ -1,11 +1,12 @@
 const { BadRequestError } = require('../error')
+const {NotFoundError} = require('../error')
 const Blog = require('../model/blog')
 const {StatusCodes} = require('http-status-codes')
 
 
 
 const getAllBlogs = async (req, res)=>{
-  const blog = await Blog.find({createdBy: req.user.userId}).sort('creaedAt')
+  const blog = await Blog.find({createdBy: req.user.userId}).sort({ createdAt: -1 }).populate('comments')
     res.status(StatusCodes.OK).json({blog, count:blog.length})
 }
 
@@ -32,24 +33,35 @@ const createBlogPost = async (req, res)=>{
     
     
     req.body.createdBy = req.user.userId
-    console.log(req.body.createdBy);
+   
 
    const blog = await Blog.create({...req.body})
    console.log(blog);
     res.status(StatusCodes.CREATED).json({msg:'Blog created Sucessfully!', blog, count:blog.length})
 
 }
+const getBlogPost = async (req, res) => {
+    try {
+        const {id:blogId} = req.params
+        const blog = await Blog.findOne({_id:blogId}).populate({
+            path: 'comments',
+            populate: {
+                path: 'createdBy',  // Replace 'user' with the actual path to the user field in your comment schema
+            },
+        });
+        if (!blog){
+            return res.status(StatusCodes.NOT_FOUND).json({ error: `No blog with id: ${blogId}` });
+        
+        }
+        res.status(StatusCodes.OK).json(blog)
 
-const getBlogPost = async (req, res)=>{
-    const {user:{userId}, 
-    params:{id:blogId}} = req
-    const blog = await Blog.findOne({_id: blogId, createdBy: userId})
-    if(!blog){
-        throw new BadRequestError(`No blog with id ${blogId}`)
+     
+    } catch (error) {
+        console.error(error);
+        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: 'Failed to retrieve the blog post.' });
     }
-    res.status(StatusCodes.OK).json({blog})
+};
 
-}
 
 const updateBlogPost = async (req, res)=>{
     const {
@@ -69,7 +81,7 @@ const updateBlogPost = async (req, res)=>{
          )
 
     if(!blog){
-        throw new BadRequestError(`No blog with id ${blogId}`)
+        throw new NotFoundError(`No blog with id ${blogId}`)
     }
     res.status(StatusCodes.OK).json({blog})
 }
@@ -85,15 +97,18 @@ const deleteBlogPost = async (req, res)=>{
 
 
     if(!blog){
-        throw new BadRequestError(`No blog with id ${blogId}`)
+        throw new NotFoundError(`No blog with id ${blogId}`)
     }
     res.status(StatusCodes.OK).json({msg: `Blog with ID ${blogId} has been Deleted Successfully!`})
 }
+
+
 
 module.exports = {
     getAllBlogs,
     createBlogPost,
     getBlogPost,
     updateBlogPost,
-    deleteBlogPost
+    deleteBlogPost,
 }
+

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const CommentSchema = require('./comments')
 
 const BlogSchema = new mongoose.Schema ({
 
@@ -12,7 +13,7 @@ const BlogSchema = new mongoose.Schema ({
         type: String,
         required: [true, 'Please insert a description'],
         minlength: 3,
-        maxlength: 100, // Adjusted for example purposes
+        maxlength: 200, // Adjusted for example purposes
     },
     photoUrl: {
         type: String,
@@ -42,6 +43,12 @@ const BlogSchema = new mongoose.Schema ({
         ref: 'User',
         required: [true, 'Please provide User']
     },
+    comments:[{
+        type: String || mongoose.Types.ObjectId,
+        ref:'Comment'
+    }],
+   
+    
 }, { timestamps: true });
 
 module.exports = mongoose.model('Blog', BlogSchema);
