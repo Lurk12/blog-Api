@@ -27,11 +27,7 @@ if (!blog){
     }
 };
 
-const getComment = async (req, res) => {
-    const { id: commentId } = req.params;
-    const comment = await Comment.findOne({ _id: commentId }).populate('createdBy');
-    console.log(comment);
-};
+
 
 
 const updateComments = async(req, res)=>{
